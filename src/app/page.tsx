@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useScroll, useTransform, useSpring, MotionValue } from "framer-motion";
-import { useRef } from "react";
+import { useRef, useState, useEffect } from "react";
 import Image from "next/image";
 import { Bebas_Neue } from "next/font/google";
 import SmoothScroll from "./components/SmoothScroll";
@@ -71,7 +71,7 @@ function AlbumCard({
       <div className="relative w-full h-full shadow-[0_40px_100px_rgba(0,0,0,0.9)] rounded-sm overflow-hidden border border-white/10 bg-zinc-900">
         <Image
           src={src}
-          alt="Album"
+          alt="Album Cover"
           fill
           className="object-cover"
           sizes="384px"
@@ -83,8 +83,16 @@ function AlbumCard({
 
 export default function Home() {
   const containerRef = useRef<HTMLDivElement>(null);
-  const albumCount = ALBUMS.length;
+  const [time, setTime] = useState("");
   
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTime(new Date().toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const albumCount = ALBUMS.length;
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start start", "end end"]
@@ -100,33 +108,15 @@ export default function Home() {
   const albumPhaseEnd = hasAlbums ? 0.75 : 0.0;
   const textCenterPoint = hasAlbums ? 0.2 : 0.4;
   
-  const textY = useTransform(
-    smoothProgress, 
-    [0, textCenterPoint], 
-    ["-45vh", "0vh"]
-  );
-
+  const textY = useTransform(smoothProgress, [0, textCenterPoint], ["-45vh", "0vh"]);
   const textScale = useTransform(
     smoothProgress,
-    hasAlbums 
-      ? [0, textCenterPoint, albumPhaseEnd, 1] 
-      : [0, textCenterPoint, 1],
-    hasAlbums
-      ? [1, 8, 8, 2500]
-      : [1, 8, 2500]
+    hasAlbums ? [0, textCenterPoint, albumPhaseEnd, 1] : [0, textCenterPoint, 1],
+    hasAlbums ? [1, 8, 8, 2500] : [1, 8, 2500]
   );
 
-  const backgroundColor = useTransform(
-    smoothProgress,
-    [0.85, 0.98],
-    ["#000000", "#ffffff"]
-  );
-
-  const textOpacity = useTransform(
-    smoothProgress,
-    [0.95, 1],
-    [1, 0] 
-  );
+  const backgroundColor = useTransform(smoothProgress, [0.85, 0.98], ["#000000", "#ffffff"]);
+  const textOpacity = useTransform(smoothProgress, [0.95, 1], [1, 0]);
 
   return (
     <SmoothScroll>
@@ -135,14 +125,27 @@ export default function Home() {
         style={{ backgroundColor }}
         className="relative h-[800vh] overflow-x-hidden"
       >
+        {/* ARCHIVAL UI OVERLAY */}
+        <div className="fixed inset-0 z-[60] pointer-events-none p-6 md:p-10 flex flex-col justify-between mix-blend-difference font-mono text-[10px] tracking-[0.3em] text-white uppercase opacity-60">
+          <div className="flex justify-between items-start">
+            <div className="space-y-1">
+              <p>REF: OKLAMA_ARCHIVE</p>
+              <p>STATUS: SYSTEM_SYNC</p>
+            </div>
+            <div className="text-right space-y-1">
+              <p>{time || "00:00:00"}</p>
+              <p>33.8958° N, 118.2201° W</p>
+            </div>
+          </div>
+          <div className="flex justify-between items-end">
+            <p>MOD: GNX_VERSION_01</p>
+          </div>
+        </div>
+
         <div className="sticky top-0 h-screen w-full flex items-center justify-center overflow-hidden">
           
           <motion.div
-            style={{
-              y: textY,
-              scale: textScale,
-              opacity: textOpacity,
-            }}
+            style={{ y: textY, scale: textScale, opacity: textOpacity }}
             className={`${bebas.className} z-50 pointer-events-none flex flex-col items-center justify-center`}
           >
             <h1 className="text-[12px] md:text-[14px] font-normal tracking-[0.4em] uppercase whitespace-nowrap leading-none text-white">
@@ -165,9 +168,10 @@ export default function Home() {
             </div>
           )}
 
-          <div className="absolute left-10 bottom-10 overflow-hidden h-32 w-[1px] bg-white/10">
+          {/* Minimal Scroll Progress Sidebar */}
+          <div className="absolute right-10 top-1/2 -translate-y-1/2 h-32 w-[1px] bg-white/10 overflow-hidden">
             <motion.div 
-              style={{ scaleY: scrollYProgress, originY: 1 }}
+              style={{ scaleY: scrollYProgress, originY: 0 }}
               className="w-full h-full bg-white/40"
             />
           </div>
@@ -175,8 +179,8 @@ export default function Home() {
 
         <div className="absolute bottom-0 w-full h-screen flex items-center justify-center pointer-events-none">
           <motion.span 
-            style={{ opacity: useTransform(smoothProgress, [0.9, 1], [0, 0.2]) }}
-            className={`${bebas.className} text-black text-sm tracking-[1em] uppercase`}
+            style={{ opacity: useTransform(smoothProgress, [0.9, 1], [0, 0.4]) }}
+            className={`${bebas.className} text-black text-2xl md:text-4xl tracking-[1.2em] uppercase`}
           >
             NOT LIKE US
           </motion.span>
